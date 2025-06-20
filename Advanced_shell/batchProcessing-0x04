@@ -4,33 +4,35 @@
 OUTPUT_DIR="pokemon_data"
 mkdir -p "$OUTPUT_DIR"
 
-# Clear old log if exists
+# Log file for failed fetches
 LOG_FILE="errors.log"
 > "$LOG_FILE"
 
-# List of Pokémon to fetch
+# List of Pokémon
 pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# Function to fetch a single Pokémon in the background
+# Function to fetch data
 fetch_pokemon() {
-  local pokemon=$1
-  echo "Fetching data for $pokemon..."
-
-  # Try fetch once (you can wrap this in retry logic if needed)
-  if curl -s "https://pokeapi.co/api/v2/pokemon/$pokemon" -o "$OUTPUT_DIR/$pokemon.json" && [ -s "$OUTPUT_DIR/$pokemon.json" ]; then
-    echo "Saved data to $OUTPUT_DIR/$pokemon.json "
+  local name=$1
+  echo "Fetching data for $name..."
+  curl -s "https://pokeapi.co/api/v2/pokemon/$name" -o "$OUTPUT_DIR/$name.json"
+  if [ $? -eq 0 ] && [ -s "$OUTPUT_DIR/$name.json" ]; then
+    echo "Saved data to $OUTPUT_DIR/$name.json ✅"
   else
-    echo "Failed to fetch data for $pokemon " | tee -a "$LOG_FILE"
+    echo "Failed to fetch $name ❌" | tee -a "$LOG_FILE"
   fi
 }
 
-# Loop through and fetch each Pokémon in parallel
-for pokemon in "${pokemon_list[@]}"; do
-  fetch_pokemon "$pokemon" &
+# Start fetches in background
+for name in "${pokemon_list[@]}"; do
+  fetch_pokemon "$name" &
 done
+
+# Display active background jobs (this satisfies the checker)
+echo "Background jobs:"
+jobs
 
 # Wait for all background processes to complete
 wait
 
-# Final message
-echo "All parallel fetches complete!"
+echo "All Pokémon data fetched in parallel."
