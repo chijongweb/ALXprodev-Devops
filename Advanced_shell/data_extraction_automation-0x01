@@ -11,20 +11,20 @@ name=$(jq -r '.name' data.json)
 
 # Pokémon height is in decimetres, convert to meters (height / 10)
 height_dm=$(jq '.height' data.json)
-height=$(echo "scale=1; $height_dm / 10" | bc)
+# Format height to 1 decimal place without trailing zeros after decimal
+formatted_height=$(awk "BEGIN {printf \"%.1f\", $height_dm/10}")
 
 # Pokémon weight is in hectograms, convert to kilograms (weight / 10)
 weight_hg=$(jq '.weight' data.json)
-weight=$(echo "scale=0; $weight_hg / 10" | bc)
+# Format weight as integer (no decimal)
+formatted_weight=$(awk "BEGIN {printf \"%d\", $weight_hg/10}")
 
 # Extract the first type's name (types is an array, get the first type)
 type=$(jq -r '.types[0].type.name' data.json)
 
-# Capitalize the first letter of the type using sed
+# Capitalize the first letter of the type and name
 type_cap=$(echo "$type" | sed 's/^\(.\)/\U\1/')
-
-# Capitalize the first letter of the name just in case (usually already capitalized)
 name_cap=$(echo "$name" | sed 's/^\(.\)/\U\1/')
 
-# Print formatted output
-echo "$name_cap is of type $type_cap, weighs ${weight}kg, and is ${height}m tall."
+# Print formatted output exactly as required
+echo "$name_cap is of type $type_cap, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
