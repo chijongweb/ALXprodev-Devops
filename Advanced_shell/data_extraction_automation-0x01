@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Format: $name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall.
+
 # Check if data.json exists
 if [ ! -f data.json ]; then
   echo "Error: data.json file not found. Please run the API request script first."
@@ -9,22 +11,20 @@ fi
 # Extract values using jq
 name=$(jq -r '.name' data.json)
 
-# Pokémon height is in decimetres, convert to meters (height / 10)
+# Convert height from decimetres to metres
 height_dm=$(jq '.height' data.json)
-# Format height to 1 decimal place without trailing zeros after decimal
 formatted_height=$(awk "BEGIN {printf \"%.1f\", $height_dm/10}")
 
-# Pokémon weight is in hectograms, convert to kilograms (weight / 10)
+# Convert weight from hectograms to kilograms
 weight_hg=$(jq '.weight' data.json)
-# Format weight as integer (no decimal)
 formatted_weight=$(awk "BEGIN {printf \"%d\", $weight_hg/10}")
 
-# Extract the first type's name (types is an array, get the first type)
+# Get the first type
 type=$(jq -r '.types[0].type.name' data.json)
 
-# Capitalize the first letter of the type and name
+# Capitalize first letters
 type_cap=$(echo "$type" | sed 's/^\(.\)/\U\1/')
 name_cap=$(echo "$name" | sed 's/^\(.\)/\U\1/')
 
-# Print formatted output exactly as required
+# Final formatted output
 echo "$name_cap is of type $type_cap, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
