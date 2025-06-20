@@ -1,1 +1,30 @@
+#!/bin/bash
 
+# Check if data.json exists
+if [ ! -f data.json ]; then
+  echo "Error: data.json file not found. Please run the API request script first."
+  exit 1
+fi
+
+# Extract values using jq
+name=$(jq -r '.name' data.json)
+
+# Pokémon height is in decimetres, convert to meters (height / 10)
+height_dm=$(jq '.height' data.json)
+height=$(echo "scale=1; $height_dm / 10" | bc)
+
+# Pokémon weight is in hectograms, convert to kilograms (weight / 10)
+weight_hg=$(jq '.weight' data.json)
+weight=$(echo "scale=0; $weight_hg / 10" | bc)
+
+# Extract the first type's name (types is an array, get the first type)
+type=$(jq -r '.types[0].type.name' data.json)
+
+# Capitalize the first letter of the type using sed
+type_cap=$(echo "$type" | sed 's/^\(.\)/\U\1/')
+
+# Capitalize the first letter of the name just in case (usually already capitalized)
+name_cap=$(echo "$name" | sed 's/^\(.\)/\U\1/')
+
+# Print formatted output
+echo "$name_cap is of type $type_cap, weighs ${weight}kg, and is ${height}m tall."
