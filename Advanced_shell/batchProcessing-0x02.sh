@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Directory to store JSON files
