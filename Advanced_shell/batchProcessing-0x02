@@ -2,27 +2,48 @@
 
 # Directory to store JSON files
 OUTPUT_DIR="pokemon_data"
+LOG_FILE="errors.log"
 
 # Create directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
+# Clear previous error log
+> "$LOG_FILE"
+
 # List of Pokémon names
 pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# Loop through each Pokémon and fetch data
+# Loop through each Pokémon and fetch data with retry logic
 for pokemon in "${pokemon_list[@]}"; do
   echo "Fetching data for $pokemon..."
 
-  # Fetch the data and save to the file
-  curl -s "https://pokeapi.co/api/v2/pokemon/$pokemon" -o "$OUTPUT_DIR/$pokemon.json"
+  success=false
+  attempts=0
 
-  # Check if curl succeeded and file is not empty
-  if [ $? -eq 0 ] && [ -s "$OUTPUT_DIR/$pokemon.json" ]; then
-    echo "Saved data to $OUTPUT_DIR/$pokemon.json "
-  else
-    echo "Failed to fetch data for $pokemon "
+  while [ $attempts -lt 3 ]; do
+    # Attempt to fetch the Pokémon data
+    curl -s "https://pokeapi.co/api/v2/pokemon/$pokemon" -o "$OUTPUT_DIR/$pokemon.json"
+
+    # Check if request was successful and file is not empty
+    if [ $? -eq 0 ] && [ -s "$OUTPUT_DIR/$pokemon.json" ]; then
+      echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅"
+      success=true
+      break
+    else
+      ((attempts++))
+      echo "Attempt $attempts failed for $pokemon. Retrying in 2 seconds..."
+      sleep 2
+    fi
+  done
+
+  # If not successful after 3 attempts, log the error
+  if [ "$success" = false ]; then
+    echo "Failed to fetch data for $pokemon after 3 attempts ❌" | tee -a "$LOG_FILE"
   fi
 
-  # Delay between requests to avoid rate-limiting (e.g., 2 seconds)
-  sleep 2
+  # Delay to avoid rate-limiting
+  sleep 1
 done
+
+# Completion message
+echo "All fetch attempts complete. Check $LOG_FILE for any errors."
